@@ -127,6 +127,43 @@ void test_keypad(){
 	//led off
 }
 
+//====== PROJECT 4 ========================
+typedef struct Sample{
+	double instananeous_voltage;
+	double max_voltage;
+	double min_voltage;
+	double average_voltage;
+	} Sample;
+
+void set_sample(Sample mysample,
+	int intantaneous, int max, int min, int avg
+	){
+	mysample.instananeous_voltage = intantaneous;
+	mysample.max_voltage = max;
+	mysample.min_voltage = min;
+	mysample.average_voltage = avg;
+}
+
+unsigned short sample(){
+	
+}
+
+void print_sample(){
+	
+}
+
+// on push of a button reset all voltage paramters
+int reset_sample(){
+	
+}
+
+int init_sample(){
+	
+}
+
+
+// ===== END PROJECT 4 ====================
+
 int main(void)
 {
 	//local variables
@@ -139,6 +176,10 @@ int main(void)
 	// main logic
     while (1) 
     {	
+		s = sample();
+		// printing the sample
+		print_sample();
+		avr_wait(500);
     }
 }
 
