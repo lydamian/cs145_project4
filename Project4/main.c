@@ -53,12 +53,8 @@ int get_key(){
 
 int setup()
 {
-	SET_BIT(DDRA, 0);
-	CLR_BIT(PORTA, 0);
 	lcd_init();
 	lcd_clr();
-	SET_BIT(DDRA, 0);
-	
 	return 1;
 }
 
@@ -67,6 +63,7 @@ int setup()
 	DISPLAY: MM/DD/YYYY on the top row,
 	 bottom row: HH:MM:SS
 */
+/*
 void display_time(struct tm *myTime){
 	//local variables
 	char top_row[11];
@@ -83,6 +80,7 @@ void display_time(struct tm *myTime){
 	lcd_puts2(bottom_row);
 	
 }
+*/
 
 /*
 	Conversions:
@@ -110,7 +108,7 @@ void toggle_blink(struct tm* myTm, int r, int c){
 	lcd_pos(r, c);
 	lcd_put(' ');
 	avr_wait(60);
-	display_time(myTm);
+	//display_time(myTm);
 	avr_wait(60);
 }
 
@@ -128,57 +126,83 @@ void test_keypad(){
 }
 
 //====== PROJECT 4 ========================
-typedef struct Sample{
-	double instananeous_voltage;
-	double max_voltage;
-	double min_voltage;
-	double average_voltage;
+typedef struct Samp{
+	float instantaneous_voltage;
+	float max_voltage;
+	float min_voltage;
+	float average_voltage;
 	} Sample;
 
-void set_sample(Sample mysample,
+void set_sample(Sample *mysample,
 	int intantaneous, int max, int min, int avg
 	){
-	mysample.instananeous_voltage = intantaneous;
-	mysample.max_voltage = max;
-	mysample.min_voltage = min;
-	mysample.average_voltage = avg;
+	mysample->instantaneous_voltage = intantaneous;
+	mysample->max_voltage = max;
+	mysample->min_voltage = min;
+	mysample->average_voltage = avg;
 }
 
 unsigned short sample(){
-	
+	return 0;
 }
 
-void print_sample(){
+// displays instantaneous voltage, max voltage, min voltage, and average voltage
+// 2 rows, 16 columns
+// 4 columns for each number
+void print_sample(Sample *sample){
+	lcd_clr();
+	//local variables
+	char top_row[16];
+	char bottom_row[16];
 	
+		
+	// TOP ROW
+	sprintf(top_row, "I:%4.2f M:%4.2f", sample->instantaneous_voltage, sample->max_voltage);
+	lcd_pos(0, 0);
+	lcd_puts2(top_row);
+		
+	// BOTTOM ROW
+	sprintf(bottom_row, "M:%4.2f A:%4.2f", sample->min_voltage, sample->average_voltage);
+	lcd_pos(1, 0);
+	lcd_puts2(bottom_row);
+	
+	avr_wait(1000);
+
 }
 
-// on push of a button reset all voltage paramters
-int reset_sample(){
-	
+// on push of a button reset all voltage parameters
+int reset_sample(Sample *mysample){
+		mysample->instantaneous_voltage = 0;
+		mysample->max_voltage = 0;
+		mysample->min_voltage = 0;
+		mysample->average_voltage = 0;
 }
-
-int init_sample(){
-	
-}
-
 
 // ===== END PROJECT 4 ====================
-
 int main(void)
 {
 	//local variables
 	int k;
-	struct tm
+	unsigned short s;
+	Sample sp;
 	
+	// test sample
+	set_sample(&sp, 3.0, 3.0, 3.0, 3.0);
 	// setting up
 	setup();
+	
+	char buf[10];
+	sprintf(buf, "%f", 0.4);
 	
 	// main logic
     while (1) 
     {	
-		s = sample();
+		avr_wait(100);
+		//s = sample();
 		// printing the sample
-		print_sample();
+		//print_sample(&sp);
+		lcd_pos(0,0);
+		lcd_puts2(buf);
 		avr_wait(500);
     }
 }
