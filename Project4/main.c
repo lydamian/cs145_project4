@@ -142,8 +142,24 @@ void set_sample(Sample *mysample,
 	mysample->average_voltage = avg;
 }
 
-unsigned short sample(){
-	return 0;
+float get_voltage(float x){
+	return (x*5.0)/1024;
+}
+
+// should be a value from 0 - 1023
+float sample(){
+	SET_BIT(ADCSRA, ADEN);
+	SET_BIT(ADCSRA, ADSC);
+	while (GET_BIT(ADCSRA, ADSC) == 1) {
+		// do nothing, conversion in progress
+		
+		if (GET_BIT(ADCSRA, ADSC) == 0) {
+			//how to get result of conversion???
+			//it is a register from ADC 
+			return ADC; //ADC type float
+		}
+	}
+	//return 0;
 }
 
 // displays instantaneous voltage, max voltage, min voltage, and average voltage
@@ -178,7 +194,7 @@ void print_sample(Sample *sample){
 // updates the max, min, and average values
 void update_sample(unsigned int new_instantaneous_voltage, Sample *sample){
 	sample->instantaneous_voltage = new_instantaneous_voltage;
-	sample->average_voltage = (new_instantaneous_voltage + sample->average_voltage)/2 //update average voltage
+	sample->average_voltage = (new_instantaneous_voltage + sample->average_voltage)/2; //update average voltage
 	if(new_instantaneous_voltage > sample->max_voltage){ // updating max voltage
 		sample->max_voltage = new_instantaneous_voltage;
 	}
@@ -202,8 +218,9 @@ int main(void)
 	//local variables
 	int k;
 	int start_sample = 0;
-	unsigned short s;
-	Sample sp;
+	unsigned short samp;
+	float s = 0;
+	Sample sp; // struct with fields, instantaneous, min, max, avg voltage.
 	
 	// setting up
 	set_sample(&sp, 1, 2, 3, 4);
@@ -211,22 +228,28 @@ int main(void)
 	
 	// main logic
     while (1) 
-    {	
+    {
+		lcd_pos(0,0);
+		lcd_puts2("PRESS D TO START");
 		// start sampling
-		if(get_key() == 12){
+		if(get_key() == 16){
 			start_sample = 1;
 		}
 		while(start_sample){
 			// reset sample
-			if(get_key() == 16){
+			if(get_key() == 12){
 				set_sample(&sp, 0, 0, 0, 0);
+				lcd_clr();
+				lcd_pos(0,0);
+				lcd_puts2("PRESS D TO START");
 				start_sample = 0;
 				break;
 			}
-			s = sample(); // gets the instantaneous value
+			samp = sample(); // gets the instantaneous value // THIS IS THE ONLY THING NOT DONEEEE!!!!!!
+			s = get_voltage(samp);
 			update_sample(s, &sp); // updating sample
 			print_sample(&sp); // printing the sample
-			avr_wait(500);
+			avr_wait(2000);
 		}
     }
 }
