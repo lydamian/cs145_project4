@@ -173,8 +173,18 @@ void print_sample(Sample *sample){
 	sprintf(bottom_row, "Mn:%1d.%02d  A:%1d.%02d", i3, d3, i4, d4);
 	lcd_pos(1, 0);
 	lcd_puts2(bottom_row);
-	
-	avr_wait(1000);
+}
+
+// updates the max, min, and average values
+void update_sample(unsigned int new_instantaneous_voltage, Sample *sample){
+	sample->instantaneous_voltage = new_instantaneous_voltage;
+	sample->average_voltage = (new_instantaneous_voltage + sample->average_voltage)/2 //update average voltage
+	if(new_instantaneous_voltage > sample->max_voltage){ // updating max voltage
+		sample->max_voltage = new_instantaneous_voltage;
+	}
+	else if(new_instantaneous_voltage < sample->min_voltage){
+		sample->min_voltage = new_instantaneous_voltage;
+	}
 
 }
 
@@ -191,22 +201,33 @@ int main(void)
 {
 	//local variables
 	int k;
+	int start_sample = 0;
 	unsigned short s;
 	Sample sp;
 	
-	// test sample
-	set_sample(&sp, 1, 2, 3, 4);
 	// setting up
+	set_sample(&sp, 1, 2, 3, 4);
 	setup();
 	
 	// main logic
     while (1) 
     {	
-		avr_wait(100);
-		s = sample();
-		// printing the sample
-		print_sample(&sp);
-		avr_wait(500);
+		// start sampling
+		if(get_key() == 12){
+			start_sample = 1;
+		}
+		while(start_sample){
+			// reset sample
+			if(get_key() == 16){
+				set_sample(&sp, 0, 0, 0, 0);
+				start_sample = 0;
+				break;
+			}
+			s = sample(); // gets the instantaneous value
+			update_sample(s, &sp); // updating sample
+			print_sample(&sp); // printing the sample
+			avr_wait(500);
+		}
     }
 }
 
