@@ -154,15 +154,23 @@ void print_sample(Sample *sample){
 	//local variables
 	char top_row[16];
 	char bottom_row[16];
+	int i1, i2, i3, i4, d1, d2, d3, d4 = 0;
+	i1 = (int)sample->instantaneous_voltage;
+	d1 = sample->instantaneous_voltage - i1;
+	i2 = (int)sample->max_voltage;
+	d2 = sample->max_voltage - i2;
+	i3 = (int)sample->min_voltage;
+	d3 = sample->min_voltage - i3;
+	i4 = (int)sample->average_voltage;
+	d4 = sample->average_voltage - i4;
 	
-		
 	// TOP ROW
-	sprintf(top_row, "I:%4.2f M:%4.2f", sample->instantaneous_voltage, sample->max_voltage);
+	sprintf(top_row, "I:%1d.%02d   Mx:%1d.%02d", i1, d1, i2, d2);
 	lcd_pos(0, 0);
 	lcd_puts2(top_row);
 		
 	// BOTTOM ROW
-	sprintf(bottom_row, "M:%4.2f A:%4.2f", sample->min_voltage, sample->average_voltage);
+	sprintf(bottom_row, "Mn:%1d.%02d  A:%1d.%02d", i3, d3, i4, d4);
 	lcd_pos(1, 0);
 	lcd_puts2(bottom_row);
 	
@@ -187,22 +195,17 @@ int main(void)
 	Sample sp;
 	
 	// test sample
-	set_sample(&sp, 3.0, 3.0, 3.0, 3.0);
+	set_sample(&sp, 1, 2, 3, 4);
 	// setting up
 	setup();
-	
-	char buf[10];
-	sprintf(buf, "%f", 0.4);
 	
 	// main logic
     while (1) 
     {	
 		avr_wait(100);
-		//s = sample();
+		s = sample();
 		// printing the sample
-		//print_sample(&sp);
-		lcd_pos(0,0);
-		lcd_puts2(buf);
+		print_sample(&sp);
 		avr_wait(500);
     }
 }
