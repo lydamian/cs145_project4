@@ -142,23 +142,28 @@ void set_sample(Sample *mysample,
 	mysample->average_voltage = avg;
 }
 
-float get_voltage(float x){
-	return (x*5.0)/1024;
+float get_voltage(unsigned short x){
+	return (x*5.0)/1023;
+}
+
+void ADC_init(){
+	CLR_BIT(ADMUX, ADLAR);
+	
+	CLR_BIT(ADMUX, REFS1); //REFS1 = 0
+	SET_BIT(ADMUX, REFS0); //REFS0 = 1
 }
 
 // should be a value from 0 - 1023
-float sample(){
+unsigned short sample(){
 	SET_BIT(ADCSRA, ADEN);
 	SET_BIT(ADCSRA, ADSC);
-	while (GET_BIT(ADCSRA, ADSC) == 1) {
-		// do nothing, conversion in progress
+	while (GET_BIT(ADCSRA, ADSC) == 1) {}; // do nothing, conversion in progress
 		
-		if (GET_BIT(ADCSRA, ADSC) == 0) {
-			//how to get result of conversion???
-			//it is a register from ADC 
-			return ADC; //ADC type float
-		}
-	}
+	//how to get result of conversion???
+	//it is a register from ADC 
+	unsigned short value = ADC;
+	//CLR_BIT(ADCSRA, ADEN);
+	return value; //ADC type float
 	//return 0;
 }
 
@@ -172,13 +177,13 @@ void print_sample(Sample *sample){
 	char bottom_row[16];
 	int i1, i2, i3, i4, d1, d2, d3, d4 = 0;
 	i1 = (int)sample->instantaneous_voltage;
-	d1 = sample->instantaneous_voltage - i1;
+	d1 = ((float)(sample->instantaneous_voltage - i1)*100);
 	i2 = (int)sample->max_voltage;
-	d2 = sample->max_voltage - i2;
+	d2 = ((float)(sample->max_voltage - i2)*100);
 	i3 = (int)sample->min_voltage;
-	d3 = sample->min_voltage - i3;
+	d3 = ((float)(sample->min_voltage - i3)*100);
 	i4 = (int)sample->average_voltage;
-	d4 = sample->average_voltage - i4;
+	d4 = ((float)(sample->average_voltage - i4)*100);
 	
 	// TOP ROW
 	sprintf(top_row, "I:%1d.%02d   Mx:%1d.%02d", i1, d1, i2, d2);
@@ -192,13 +197,13 @@ void print_sample(Sample *sample){
 }
 
 // updates the max, min, and average values
-void update_sample(unsigned int new_instantaneous_voltage, Sample *sample){
+void update_sample(float new_instantaneous_voltage, Sample *sample){
 	sample->instantaneous_voltage = new_instantaneous_voltage;
 	sample->average_voltage = (new_instantaneous_voltage + sample->average_voltage)/2; //update average voltage
 	if(new_instantaneous_voltage > sample->max_voltage){ // updating max voltage
 		sample->max_voltage = new_instantaneous_voltage;
 	}
-	else if(new_instantaneous_voltage < sample->min_voltage){
+	else if(new_instantaneous_voltage < sample->min_voltage || sample->min_voltage == 0){ // updating min
 		sample->min_voltage = new_instantaneous_voltage;
 	}
 
@@ -219,12 +224,14 @@ int main(void)
 	int k;
 	int start_sample = 0;
 	unsigned short samp;
-	float s = 0;
+	float s;
 	Sample sp; // struct with fields, instantaneous, min, max, avg voltage.
-	
+	char buf[100];
+	char buf2[100];
 	// setting up
 	set_sample(&sp, 1, 2, 3, 4);
 	setup();
+	ADC_init();
 	
 	// main logic
     while (1) 
@@ -237,7 +244,7 @@ int main(void)
 		}
 		while(start_sample){
 			// reset sample
-			if(get_key() == 12){
+			if(get_key() == 12){ // User press C to reset.
 				set_sample(&sp, 0, 0, 0, 0);
 				lcd_clr();
 				lcd_pos(0,0);
@@ -249,8 +256,23 @@ int main(void)
 			s = get_voltage(samp);
 			update_sample(s, &sp); // updating sample
 			print_sample(&sp); // printing the sample
-			avr_wait(2000);
+			avr_wait(500);
 		}
+		
+		/*
+		unsigned short var = sample();
+		sprintf(buf, "acd: %d", var);
+		lcd_pos(0,0);
+		lcd_puts2(buf);
+		float s = get_voltage(var);
+		int value = (int) s;
+		int dec = ((int)(s*100))%100;
+		sprintf(buf2, "%d.%d", value, dec);
+		lcd_pos(1,0);
+		lcd_puts2(buf2);
+		
+		avr_wait(500);
+		*/
     }
 }
 
