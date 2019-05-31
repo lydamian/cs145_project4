@@ -127,10 +127,11 @@ void test_keypad(){
 
 //====== PROJECT 4 ========================
 typedef struct Samp{
-	float instantaneous_voltage;
-	float max_voltage;
-	float min_voltage;
-	float average_voltage;
+	//was float
+	int instantaneous_voltage;
+	int max_voltage;
+	int min_voltage;
+	int average_voltage;
 	} Sample;
 
 void set_sample(Sample *mysample,
@@ -142,8 +143,9 @@ void set_sample(Sample *mysample,
 	mysample->average_voltage = avg;
 }
 
-float get_voltage(unsigned short x){
-	return (x*5.0)/1023;
+//was unsigned short
+int get_voltage(int x){
+	return (x*500)/1023;
 }
 
 void ADC_init(){
@@ -176,7 +178,8 @@ void print_sample(Sample *sample){
 	char top_row[16];
 	char bottom_row[16];
 	int i1, i2, i3, i4, d1, d2, d3, d4 = 0;
-	i1 = (int)sample->instantaneous_voltage;
+	/*
+	i1 = (int)sample->instantaneous_voltage/100;
 	d1 = ((float)(sample->instantaneous_voltage - i1)*100);
 	i2 = (int)sample->max_voltage;
 	d2 = ((float)(sample->max_voltage - i2)*100);
@@ -184,6 +187,15 @@ void print_sample(Sample *sample){
 	d3 = ((float)(sample->min_voltage - i3)*100);
 	i4 = (int)sample->average_voltage;
 	d4 = ((float)(sample->average_voltage - i4)*100);
+	*/
+	i1 = sample->instantaneous_voltage / 100;
+	d1 = (sample->instantaneous_voltage % 100);
+	i2 = sample->max_voltage / 100;
+	d2 = (sample->max_voltage % 100);
+	i3 = sample->min_voltage / 100;
+	d3 = (sample->min_voltage % 100);
+	i4 = sample->average_voltage / 100;
+	d4 = (sample->average_voltage % 100);
 	
 	// TOP ROW
 	sprintf(top_row, "I:%1d.%02d   Mx:%1d.%02d", i1, d1, i2, d2);
@@ -197,7 +209,8 @@ void print_sample(Sample *sample){
 }
 
 // updates the max, min, and average values
-void update_sample(float new_instantaneous_voltage, Sample *sample){
+void update_sample(int new_instantaneous_voltage, Sample *sample){
+	//new_instantaneous_voltage = 3 digit #
 	sample->instantaneous_voltage = new_instantaneous_voltage;
 	sample->average_voltage = (new_instantaneous_voltage + sample->average_voltage)/2; //update average voltage
 	if(new_instantaneous_voltage > sample->max_voltage){ // updating max voltage
@@ -223,8 +236,8 @@ int main(void)
 	//local variables
 	int k;
 	int start_sample = 0;
-	unsigned short samp;
-	float s;
+	int samp; //was unsigned short
+	int s;
 	Sample sp; // struct with fields, instantaneous, min, max, avg voltage.
 	char buf[100];
 	char buf2[100];
@@ -253,7 +266,7 @@ int main(void)
 				break;
 			}
 			samp = sample(); // gets the instantaneous value // THIS IS THE ONLY THING NOT DONEEEE!!!!!!
-			s = get_voltage(samp);
+			s = get_voltage(samp); //change this
 			update_sample(s, &sp); // updating sample
 			print_sample(&sp); // printing the sample
 			avr_wait(500);
